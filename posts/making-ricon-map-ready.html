@@ -28,7 +28,7 @@
     <p><em>September 2026</em></p>
 <section>  
  <p>
-In 2020 I published <a href="https://www.nature.com/articles/s41597-020-00660-6">RICON</a>:
+In 2020 I published <a href="https://www.nature.com/articles/s41597-020-00660-6" target="_blank" rel="noopener noreferrer">RICON</a>:
 a graph of real, routed connectivity between dams
 and streamgages, built for the Colorado River Basin and later extended
 across the full contiguous US. It answers a specific, unglamorous question —
@@ -41,13 +41,13 @@ gauge table, and an edge list of routed distances between them.
 
 <p>
 That's worth revisiting now for two reasons. Back in June, Google
-open-sourced <a href="https://github.com/google-research/flood-forecasting">OpenHydroNet</a>,
+open-sourced <a href="https://github.com/google-research/flood-forecasting" target="_blank" rel="noopener noreferrer">OpenHydroNet</a>,
 the framework behind Flood Hub — a heavily
 modified fork of NeuralHydrology that ships the two model architectures
 running operationally there (a Mean Embedding Forecast LSTM and, before it,
 a State Handoff Forecast LSTM), trained on the community Caravan dataset.
 It's the same model family behind the
-<a href="https://www.nature.com/articles/s41586-024-07145-1">2024 Nature paper</a>
+<a href="https://www.nature.com/articles/s41586-024-07145-1" target="_blank" rel="noopener noreferrer">2024 Nature paper</a>
 showing a single, globally trained network can forecast floods in basins
 that have never had a gauge at all. There's now a real, open codebase to
 think about RICON alongside, not just a paper.
@@ -56,13 +56,13 @@ think about RICON alongside, not just a paper.
 <p>
 Second, there's a live disagreement in the literature about whether river
 network topology actually helps these models.
-<a href="https://www.nature.com/articles/s44304-025-00083-6">Wang et al.</a>
+<a href="https://www.nature.com/articles/s44304-025-00083-6" target="_blank" rel="noopener noreferrer">Wang et al.</a>
 (published in <em>npj Natural Hazards</em>, 2025) showed a reachability-based graph
 transformation — one built specifically to counteract "over-squashing," the
 tendency of sparse, tree-like river graphs to bury long-range dependencies —
 got the same accuracy at 24 hours that a topology-free baseline only reached
 at hour 14, roughly a 71% effective extension of warning time.
-<a href="https://arxiv.org/abs/2405.19836">Kirschstein and Sun</a>,
+<a href="https://arxiv.org/abs/2405.19836" target="_blank" rel="noopener noreferrer">Kirschstein and Sun</a>,
 working independently, found the opposite: their models' learned
 edge weights showed no correlation with actual river topology at all, and
 gained nothing from it. Read together, the honest takeaway isn't "topology
@@ -78,7 +78,7 @@ graph construction includes.
 </p>
 
 <figure>
-  <img src="images/pipeline_diagram.png"
+  <img src="../images/pipeline_diagram.png"
        alt="Diagram showing RICON's pipeline: create_network() and find_distance() in R produce EdgeList.csv, which a pure-Python layer converts into shapefiles and a GeoPackage">
   <figcaption>The two halves of RICON: the R connectivity algorithm, and the Python layer that turns its output into GIS layers.</figcaption>
 </figure>
@@ -97,7 +97,7 @@ across required streaming rather than loading it whole.
 </p>
 
 <figure>
-  <img src="images/before_after.png"
+  <img src="../images/before_after.png"
        alt="Side-by-side: raw EdgeList.csv rows next to the same rows rendered as a map, showing the routed path from Glen Canyon Dam to Hoover Dam">
   <figcaption>The same ten rows of EdgeList.csv, rendered: Glen Canyon Dam to Hoover Dam, 592.9&nbsp;km over 10 routed edges — the exact distance the original paper validated.</figcaption>
 </figure>
@@ -110,7 +110,7 @@ graph you can see, rather than 3,092 rows in a spreadsheet:
 </p>
 
 <figure>
-  <img src="images/ricon_connectivity.gif"
+  <img src="../images/ricon_connectivity.gif"
        alt="Animated map building up RICON's connectivity graph across the Colorado River Basin, then highlighting the validated Glen Canyon to Hoover Dam path">
   <figcaption>Dams and gauges are real infrastructure, not sampling points — and the edges between them are actual routed distances, not inferred adjacency.</figcaption>
 </figure>
