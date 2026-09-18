@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Making RICON map-ready — Sudarshana Mukhopadhyay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<header class="site">
+  <nav>
+    <a class="wordmark" href="../index.html">Sudarshana Mukhopadhyay</a>
+    <ul>
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../cv.html">CV</a></li>
+      <li><a href="../research.html">Research</a></li>
+      <li><a href="../software.html">Software</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="hero post-hero" style="padding-bottom: 8px;">
+    <h1>Making RICON map-ready</h1>
+    <p><em>September 2026</em></p>
+<section>  
+ <p>
+In 2020 I published <a href="https://www.nature.com/articles/s41597-020-00660-6">RICON</a>:
+a graph of real, routed connectivity between dams
+and streamgages, built for the Colorado River Basin and later extended
+across the full contiguous US. It answers a specific, unglamorous question —
+which downstream gauge or reservoir is actually hydrologically connected to,
+and affected by, conditions at any given upstream node — using actual flow
+routing and dam operations rather than statistical similarity between
+catchments. For six years it has lived as a set of CSVs: a dam table, a
+gauge table, and an edge list of routed distances between them.
+</p>
+
+<p>
+That's worth revisiting now for two reasons. Back in June, Google
+open-sourced <a href="https://github.com/google-research/flood-forecasting">OpenHydroNet</a>,
+the framework behind Flood Hub — a heavily
+modified fork of NeuralHydrology that ships the two model architectures
+running operationally there (a Mean Embedding Forecast LSTM and, before it,
+a State Handoff Forecast LSTM), trained on the community Caravan dataset.
+It's the same model family behind the
+<a href="https://www.nature.com/articles/s41586-024-07145-1">2024 Nature paper</a>
+showing a single, globally trained network can forecast floods in basins
+that have never had a gauge at all. There's now a real, open codebase to
+think about RICON alongside, not just a paper.
+</p>
+
+<p>
+Second, there's a live disagreement in the literature about whether river
+network topology actually helps these models.
+<a href="https://www.nature.com/articles/s44304-025-00083-6">Wang et al.</a>
+(published in <em>npj Natural Hazards</em>, 2025) showed a reachability-based graph
+transformation — one built specifically to counteract "over-squashing," the
+tendency of sparse, tree-like river graphs to bury long-range dependencies —
+got the same accuracy at 24 hours that a topology-free baseline only reached
+at hour 14, roughly a 71% effective extension of warning time.
+<a href="https://arxiv.org/abs/2405.19836">Kirschstein and Sun</a>,
+working independently, found the opposite: their models' learned
+edge weights showed no correlation with actual river topology at all, and
+gained nothing from it. Read together, the honest takeaway isn't "topology
+helps" — it's that topology helps when the graph is built to solve a
+specific, identified problem, not just added because it's physically real.
+RICON's graph is exactly that kind of specific — though the comparison is
+worth being precise about. Wang et al.'s and Kirschstein and Sun's graphs
+are already built from real river-network topology, not statistical
+catchment similarity; what neither tests is engineered infrastructure.
+RICON's dams are first-class nodes with their own operational effect on
+downstream flow, not just points along a channel — a layer neither paper's
+graph construction includes.
+</p>
+
+<figure>
+  <img src="blog_assets/pipeline_diagram.png"
+       alt="Diagram showing RICON's pipeline: create_network() and find_distance() in R produce EdgeList.csv, which a pure-Python layer converts into shapefiles and a GeoPackage">
+  <figcaption>The two halves of RICON: the R connectivity algorithm, and the Python layer that turns its output into GIS layers.</figcaption>
+</figure>
+
+<p>
+Which is what made the CSVs feel like unfinished business. This year I
+built a conversion layer that turns RICON's raw output — 1,344 dams, 1,656
+gauges, 3,092 routed edges for the Colorado River Basin alone — into actual
+shapefiles and a GeoPackage that QGIS, ArcGIS, or any GIS tool can load
+directly. It's pure Python with no GDAL or geopandas dependency: shapefiles
+cap attribute column names at 10 characters, so the consolidated GeoPackage
+(built directly over SQLite, with the right <code>application_id</code>
+PRAGMA so QGIS and ArcGIS actually recognize it) is the more useful target,
+and reading the 426MB NHD flowline shapefile that RICON's edges route
+across required streaming rather than loading it whole.
+</p>
+
+<figure>
+  <img src="blog_assets/before_after.png"
+       alt="Side-by-side: raw EdgeList.csv rows next to the same rows rendered as a map, showing the routed path from Glen Canyon Dam to Hoover Dam">
+  <figcaption>The same ten rows of EdgeList.csv, rendered: Glen Canyon Dam to Hoover Dam, 592.9&nbsp;km over 10 routed edges — the exact distance the original paper validated.</figcaption>
+</figure>
+
+<p>
+That number is a nice check on its own: it's the same Glen Canyon–to–Hoover
+distance the 2020 paper reported, reproduced independently from the raw
+edge list. Here's what the full basin looks like once it's actually a
+graph you can see, rather than 3,092 rows in a spreadsheet:
+</p>
+
+<figure>
+  <img src="blog_assets/ricon_connectivity.gif"
+       alt="Animated map building up RICON's connectivity graph across the Colorado River Basin, then highlighting the validated Glen Canyon to Hoover Dam path">
+  <figcaption>Dams and gauges are real infrastructure, not sampling points — and the edges between them are actual routed distances, not inferred adjacency.</figcaption>
+</figure>
+
+<p>
+I don't have this fully worked out yet — whether an engineered connectivity
+graph like RICON's is the kind of structure that would move the needle in a
+topology-aware forecasting model, or where dam-regulated reaches in
+particular might be the place a catchment-similarity model is most likely
+to miss something. But the data is finally in a shape where that's a
+question someone could actually test, instead of one that stays stuck at
+the level of a paper citation.
+</p>
+
+
+    <p><a class="back-link" href="../index.html">← Back to notes</a></p>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div>Sudarshana Mukhopadhyay</div>
+    <div class="socials">
+      <a href="https://twitter.com/SudarshanaCE">Twitter</a>
+      <a href="https://www.linkedin.com/in/suda0406/">LinkedIn</a>
+      <a href="https://orcid.org/0000-0002-3567-4801">ORCID</a>
+      <a href="mailto:sumukhopadhyay@ucsd.edu">Email</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
